@@ -24,15 +24,15 @@ def speech_to_text(capturas_segundo: 16000):
         # abrimos el microfono hasta que se pulse enter
         # el microfono abierto captura rafagas de sonido y se las pasa a callback para juntarlas todas
         with sd.InputStream(callback=callback, samplerate=capturas_segundo, channels=1):
-            input()
             print("Pulsa ENTER para cerrar el microfono")
+            input()
     except Exception as e:
         print(e)
         return None, None
 
     # concatenamos todos los bloques de audio en uno solo
     audio_final = np.concatenate(lista_grabacion, axis=0) # tiene forma [numero de muestras, canales]
-    audio_final = audio_final.squeeze(audio_final,) # quitamos una dimension
+    audio_final = audio_final.squeeze(axis=1)  # quita solo el eje de los canales, quitamos una dimension
     valor_maximo_positivo = np.max(np.abs(audio_final)) # obtenemos el valor maximo en positivo para normalizar
 
     # el valor maximo puede ser 0 si no se habla, por lo que nos protegemos
@@ -45,7 +45,7 @@ def speech_to_text(capturas_segundo: 16000):
     return audio_final, capturas_segundo
 
 # llamamos a la funcion
-audio = speech_to_text(capturas_segundo=16000)
+audio, sr = speech_to_text(capturas_segundo=16000)
 
 # usamos el modelo para predecir el audio y generar texto.
 # le pasamos el audio ya procesado y fp16=16 para que sea float32 y haya mejor precision
