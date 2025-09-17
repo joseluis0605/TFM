@@ -37,6 +37,7 @@ def speech_to_text(capturas_segundo: 16000):
 
     # el valor maximo puede ser 0 si no se habla, por lo que nos protegemos
     if valor_maximo_positivo > 0:
+
         audio_final = audio_final / valor_maximo_positivo
     else:
         audio_final = audio_final.astype("float32") # se coloca el mismo formato pero todo a cero
