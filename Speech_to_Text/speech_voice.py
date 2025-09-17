@@ -11,7 +11,8 @@ def speech_to_text(capturas_segundo: 16000):
     print("Capturando sonido...")
     lista_grabacion = []
 
-    # definimos funcion que coja las capturas y las almacene
+    # definimos funcion que coja las capturas y las
+    # almacene
     def callback(indata, frames, time, status):
         if status: # si hay algun error, lo muestre
             print(status)
