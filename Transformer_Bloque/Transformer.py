@@ -87,4 +87,9 @@ class Transformer(nn.Module):
 
         # la salida del decoder la pasamos por una capa lineal
         salida = self.capa_lineal(salida_decoder)
+
+        # la salida sera un tensor de logits (numeros sin procesar), a los cuales le tendremos que aplicar un softmax
+        # con softmax sacaremos cual es la probabilidad de cada token
+        # luego debemos aplicar un argmax para sacar el token de mayor probabilidad y ese sera nuestro resultado
+        # formato salida --> [batch_size, tam_secuencia, tam_vocabulario_salida]
         return salida

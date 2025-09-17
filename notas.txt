@@ -1,0 +1,39 @@
+Para la aplicacion web: Gradio (https://www.youtube.com/watch?v=mB68GanHJj4&list=PLMi6KgK4_mk3DH0Mze62_wyxEmg4R9dF9)
+
+streamlite
+
+Para reconocimiento de voz: usar modelos pre-entrenados: Whisper
+
+Para convertir texto a voz: usar modelos pre-entrenados: ESPnet TTS, Google Text-to-Speech, Coqui TTS, Bark
+
+Transformer:
+- Desarrollar mi propio transformer, problema --> datasets
+
+| Dataset           | Características               | Recomendado para            |
+| ----------------- | ----------------------------- | --------------------------- |
+|   Tatoeba         | Frases sencillas y cotidianas | Prototipos, bajo recurso    |
+|   OpenSubtitles   | Conversaciones informales     | Traducción de voz natural   |
+|   Europarl        | Lenguaje formal, técnico      | Entrenamiento más académico |
+|   WMT             | Alta calidad, curado          | Modelos base fuertes        |
+|   ParaCrawl       | Mucho volumen, algo sucio     | Entrenamiento masivo        |
+|   IWSLT-TED       | Buena variedad y calidad      | Ejemplos educativos         |
+
+
+# Core ML y Transformers
+torch==2.2.0
+transformers==4.40.2
+datasets==2.18.0
+sentencepiece==0.1.99
+
+# Reconocimiento de voz (ASR)
+openai-whisper==1.1.10
+speechrecognition==3.10.1
+
+# Síntesis de voz (TTS)
+TTS==0.22.0
+
+# Procesamiento de audio (opcional)
+librosa==0.10.1
+
+# Interfaz gráfica (opcional)
+gradio==4.27.0

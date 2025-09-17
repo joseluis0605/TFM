@@ -1,8 +1,6 @@
 from langdetect import detect
 from transformers import MBart50TokenizerFast
-import pandas as pd
 import torch
-
 
 class TokenizadorBatch:
     def __init__(self, max_length=128, batch_size=1024, device=None):
@@ -10,64 +8,56 @@ class TokenizadorBatch:
         self.modelo_tokenizador = MBart50TokenizerFast.from_pretrained(
             "facebook/mbart-large-50-many-to-many-mmt"
         )
-        self.max_length = max_length
-        self.batch_size = batch_size
-        self.device = device if device else torch.device("mps") if torch.has_mps else torch.device("cpu")
+        self.max_length = max_length # tamaño maximo de la secuencia
+        self.batch_size = batch_size # tamaño del batch
+        self.device = device if device else torch.device("mps") if torch.backends.mps.is_built() else torch.device("cpu")
 
     def detector_idioma(self, texto):
         idioma = detect(texto)
         return "es_XX" if idioma == "es" else "en_XX"
 
-    def tokenizar_batch(self, lista_textos):
+    def tokenizar_fila(self, texto_encoder, texto_decoder):
         """
-        Tokeniza un listado de frases en batches.
-        Devuelve dos listas: tokens_encoder y tokens_decoder
+        Tokeniza una fila del dataset:
+        - texto_encoder: sin tokens especiales
+        - texto_decoder: con tokens especiales
         """
-        tokens_encoder = []
-        tokens_decoder = []
+        # Detectamos idioma del encoder
+        idioma = self.detector_idioma(texto_encoder)
+        self.modelo_tokenizador.src_lang = idioma
 
-        # Procesamos por batch
-        for i in range(0, len(lista_textos), self.batch_size):
-            batch = lista_textos[i:i + self.batch_size]
+        # Tokenizamos encoder (sin tokens especiales)
+        tokens_encoder = self.modelo_tokenizador(
+            texto_encoder,
+            add_special_tokens=False,
+            truncation=True,
+            max_length=self.max_length,
+            return_tensors="pt"
+        ).input_ids.to(self.device)
 
-            # Detectamos idioma de cada frase (puedes optimizar detectando idioma una sola vez si sabes que todo es español o inglés)
-            idiomas = [self.detector_idioma(t) for t in batch]
-
-            # Tokenización por batch
-            # Nota: MBart no permite batch con distintos src_lang, por eso se hace por frase si hay idiomas mixtos
-            for texto, idioma in zip(batch, idiomas):
-                self.modelo_tokenizador.src_lang = idioma
-                tokens_con = self.modelo_tokenizador(
-                    texto,
-                    add_special_tokens=True,
-                    truncation=True,
-                    max_length=self.max_length,
-                    return_tensors="pt"
-                )
-                tokens_sin = self.modelo_tokenizador(
-                    texto,
-                    add_special_tokens=False,
-                    truncation=True,
-                    max_length=self.max_length,
-                    return_tensors="pt"
-                )
-                # Movemos tensores a device
-                tokens_encoder.append(tokens_sin.input_ids.to(self.device))  # encoder: sin tokens especiales
-                tokens_decoder.append(tokens_con.input_ids.to(self.device))  # decoder: con tokens especiales
+        # Tokenizamos decoder (con tokens especiales)
+        tokens_decoder = self.modelo_tokenizador(
+            texto_decoder,
+            add_special_tokens=True,
+            truncation=True,
+            max_length=self.max_length,
+            return_tensors="pt"
+        ).input_ids.to(self.device)
 
         return tokens_encoder, tokens_decoder
 
-    def tokenizar_dataframe(self, df, columna_texto):
+    def tokenizar_dataframe(self, df, columna_encoder="idioma", columna_decoder="traduccion"):
         """
-        Tokeniza un DataFrame completo y añade columnas 'entrada_encoder' y 'entrada_decoder'
+        Tokeniza un DataFrame completo y añade columnas 'entrada_encoder' y 'entrada_decoder'.
         """
-        lista_textos = df[columna_texto].tolist()
-        tokens_encoder, tokens_decoder = self.tokenizar_batch(lista_textos)
+        encoder_tokens = []
+        decoder_tokens = []
 
-        # Guardamos en el DataFrame
-        df["entrada_encoder"] = tokens_encoder
-        df["entrada_decoder"] = tokens_decoder
+        for enc_texto, dec_texto in zip(df[columna_encoder], df[columna_decoder]):
+            enc_tokens, dec_tokens = self.tokenizar_fila(enc_texto, dec_texto)
+            encoder_tokens.append(enc_tokens)
+            decoder_tokens.append(dec_tokens)
+
+        df["entrada_encoder"] = encoder_tokens
+        df["entrada_decoder"] = decoder_tokens
         return df
-
-
-
